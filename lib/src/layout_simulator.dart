@@ -13,13 +13,19 @@ const double _kSettingsHeight = 72.0;
 class LayoutSimulator extends StatefulWidget {
   final Widget child;
   final bool enable;
+  final DeviceSpecification? initialSpec;
   final Function(ThemeMode)? onChangedThemeMode;
+  final double screenScale;
+  final double textScaleFactor;
 
   /// Creates a new [DeviceSimulator].
   LayoutSimulator({
     required this.child,
     this.onChangedThemeMode,
     this.enable = true,
+    this.initialSpec,
+    this.screenScale = 0.8,
+    this.textScaleFactor = 1.0,
   });
 
   _LayoutSimulatorState createState() =>
@@ -42,6 +48,10 @@ class _LayoutSimulatorState extends State<LayoutSimulator> {
   @override
   void initState() {
     super.initState();
+
+    _currentSpec = widget.initialSpec ?? iosSpecs.first;
+    _screenScale = widget.screenScale;
+    _textScale = widget.textScaleFactor;
   }
 
   @override
@@ -53,12 +63,10 @@ class _LayoutSimulatorState extends State<LayoutSimulator> {
     var spec = _currentSpec;
     // handle orientation
     Size simulatedSize = spec.size ?? Size.zero;
-    if (_simulatedOrientation == Orientation.landscape)
-      simulatedSize = simulatedSize.flipped;
+    if (_simulatedOrientation == Orientation.landscape) simulatedSize = simulatedSize.flipped;
 
     double navBarHeight = 0.0;
-    if (spec.platform == TargetPlatform.android)
-      navBarHeight = spec.navBarHeight ?? 0;
+    if (spec.platform == TargetPlatform.android) navBarHeight = spec.navBarHeight ?? 0;
 
     // handle overflow
     bool overflowWidth = false;
@@ -76,8 +84,8 @@ class _LayoutSimulatorState extends State<LayoutSimulator> {
     double cornerRadius = spec.cornerRadius;
 
     EdgeInsets? padding = spec.padding;
-    if (_simulatedOrientation == Orientation.landscape &&
-        spec.paddingLandscape != null) padding = spec.paddingLandscape;
+    if (_simulatedOrientation == Orientation.landscape && spec.paddingLandscape != null)
+      padding = spec.paddingLandscape;
 
     var content = MediaQuery(
       key: _contentKey,
@@ -103,40 +111,7 @@ class _LayoutSimulatorState extends State<LayoutSimulator> {
     );
 
     Size notchSize = spec.notchSize ?? Size.zero;
-    Widget notch;
-    if (_simulatedOrientation == Orientation.landscape) {
-      notch = Positioned(
-        left: 0.0,
-        top: (simulatedSize.height - notchSize.width) / 2.0,
-        width: notchSize.height,
-        height: notchSize.width,
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.only(
-              topRight: Radius.circular(notchSize.height / 2.0),
-              bottomRight: Radius.circular(notchSize.height / 2.0),
-            ),
-            color: Colors.black,
-          ),
-        ),
-      );
-    } else {
-      notch = Positioned(
-        top: 0.0,
-        right: (simulatedSize.width - notchSize.width) / 2.0,
-        width: notchSize.width,
-        height: notchSize.height,
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(notchSize.height / 2.0),
-              bottomRight: Radius.circular(notchSize.height / 2.0),
-            ),
-            color: Colors.black,
-          ),
-        ),
-      );
-    }
+    Widget notch = _buildNotch(spec, notchSize, simulatedSize);
 
     Widget fakeStatusBar = Positioned(
       left: 0.0,
@@ -172,7 +147,7 @@ class _LayoutSimulatorState extends State<LayoutSimulator> {
       decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).primaryColor.withOpacity(0.2),
+            color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
             spreadRadius: 16,
             blurRadius: 16,
             offset: Offset(0, 0), // changes position of shadow
@@ -195,8 +170,7 @@ class _LayoutSimulatorState extends State<LayoutSimulator> {
 
     Widget screen = Material(
       child: MediaQuery(
-        data:
-            MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(1.0)),
+        data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(1.0)),
         child: Stack(
           children: [
             Column(
@@ -236,10 +210,8 @@ class _LayoutSimulatorState extends State<LayoutSimulator> {
                             CupertinoButton(
                               child: Icon(Icons.crop_free, color: Colors.white),
                               onPressed: () {
-                                final parentContext =
-                                    navigatorKey.currentContext;
-                                if (parentContext == null || _popupMenuOpened)
-                                  return;
+                                final parentContext = navigatorKey.currentContext;
+                                if (parentContext == null || _popupMenuOpened) return;
                                 setState(() {
                                   _popupMenuOpened = true;
                                 });
@@ -258,8 +230,7 @@ class _LayoutSimulatorState extends State<LayoutSimulator> {
                                           vertical: size.height / 6,
                                         ),
                                         child: Navigator(
-                                          onGenerateRoute: (route) =>
-                                              MaterialPageRoute(
+                                          onGenerateRoute: (route) => MaterialPageRoute(
                                             settings: route,
                                             builder: (context) => DeviceList(
                                               onSelect: (spec) {
@@ -268,8 +239,7 @@ class _LayoutSimulatorState extends State<LayoutSimulator> {
                                                 });
                                               },
                                               onDone: () {
-                                                Navigator.of(parentContext)
-                                                    .pop();
+                                                Navigator.of(parentContext).pop();
                                               },
                                             ),
                                           ),
@@ -291,8 +261,8 @@ class _LayoutSimulatorState extends State<LayoutSimulator> {
                                 children: <Widget>[
                                   Text(
                                     _currentSpec.name ?? '',
-                                    style: TextStyle().copyWith(
-                                        color: Colors.white54, fontSize: 10.0),
+                                    style:
+                                        TextStyle().copyWith(color: Colors.white54, fontSize: 10.0),
                                   ),
                                   FittedBox(
                                     child: Row(
@@ -302,22 +272,17 @@ class _LayoutSimulatorState extends State<LayoutSimulator> {
                                           '${(simulatedSize.width * _screenScale).round()}',
                                           style: TextStyle().copyWith(
                                               fontSize: 12,
-                                              color: overflowWidth
-                                                  ? Colors.orange
-                                                  : Colors.white),
+                                              color: overflowWidth ? Colors.orange : Colors.white),
                                         ),
                                         Text(
                                           ' • ',
-                                          style: TextStyle()
-                                              .copyWith(color: Colors.white),
+                                          style: TextStyle().copyWith(color: Colors.white),
                                         ),
                                         Text(
                                           '${(simulatedSize.height * _screenScale).round()}',
                                           style: TextStyle().copyWith(
                                               fontSize: 12,
-                                              color: overflowHeight
-                                                  ? Colors.orange
-                                                  : Colors.white),
+                                              color: overflowHeight ? Colors.orange : Colors.white),
                                         ),
                                       ],
                                     ),
@@ -332,10 +297,9 @@ class _LayoutSimulatorState extends State<LayoutSimulator> {
                             ),
                             IconButton(
                               icon: Icon(Icons.crop_portrait),
-                              color:
-                                  _simulatedOrientation == Orientation.portrait
-                                      ? Colors.white
-                                      : Colors.white24,
+                              color: _simulatedOrientation == Orientation.portrait
+                                  ? Colors.white
+                                  : Colors.white24,
                               onPressed: () {
                                 setState(() {
                                   _simulatedOrientation = Orientation.portrait;
@@ -344,10 +308,9 @@ class _LayoutSimulatorState extends State<LayoutSimulator> {
                             ),
                             IconButton(
                               icon: Icon(Icons.crop_landscape),
-                              color:
-                                  _simulatedOrientation == Orientation.landscape
-                                      ? Colors.white
-                                      : Colors.white24,
+                              color: _simulatedOrientation == Orientation.landscape
+                                  ? Colors.white
+                                  : Colors.white24,
                               onPressed: () {
                                 setState(() {
                                   _simulatedOrientation = Orientation.landscape;
@@ -362,24 +325,20 @@ class _LayoutSimulatorState extends State<LayoutSimulator> {
                             if (onChangedThemeMode != null) ...[
                               IconButton(
                                 icon: Icon(Icons.light_mode),
-                                color: Theme.of(context).brightness ==
-                                        Brightness.light
+                                color: Theme.of(context).brightness == Brightness.light
                                     ? Colors.white
                                     : Colors.white24,
                                 onPressed: () {
-                                  (onChangedThemeMode ??
-                                      (_) {})(ThemeMode.light);
+                                  (onChangedThemeMode ?? (_) {})(ThemeMode.light);
                                 },
                               ),
                               IconButton(
                                 icon: Icon(Icons.dark_mode),
-                                color: Theme.of(context).brightness ==
-                                        Brightness.dark
+                                color: Theme.of(context).brightness == Brightness.dark
                                     ? Colors.white
                                     : Colors.white24,
                                 onPressed: () {
-                                  (onChangedThemeMode ??
-                                      (_) {})(ThemeMode.dark);
+                                  (onChangedThemeMode ?? (_) {})(ThemeMode.dark);
                                 },
                               ),
                               VerticalDivider(
@@ -481,6 +440,89 @@ class _LayoutSimulatorState extends State<LayoutSimulator> {
       ),
     );
     return screen;
+  }
+
+  Widget _buildNotch(DeviceSpecification spec, Size notchSize, Size simulatedSize) {
+    if (notchSize == Size.zero) {
+      return SizedBox.shrink();
+    }
+
+    switch (spec.notchType) {
+      case NotchType.none:
+        return SizedBox.shrink();
+      
+      case NotchType.traditional:
+        return _buildTraditionalNotch(notchSize, simulatedSize);
+      
+      case NotchType.dynamicIsland:
+        return _buildDynamicIsland(notchSize, simulatedSize);
+    }
+  }
+
+  Widget _buildTraditionalNotch(Size notchSize, Size simulatedSize) {
+    if (_simulatedOrientation == Orientation.landscape) {
+      return Positioned(
+        left: 0.0,
+        top: (simulatedSize.height - notchSize.width) / 2.0,
+        width: notchSize.height,
+        height: notchSize.width,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.only(
+              topRight: Radius.circular(notchSize.height / 2.0),
+              bottomRight: Radius.circular(notchSize.height / 2.0),
+            ),
+            color: Colors.black,
+          ),
+        ),
+      );
+    } else {
+      return Positioned(
+        top: 0.0,
+        right: (simulatedSize.width - notchSize.width) / 2.0,
+        width: notchSize.width,
+        height: notchSize.height,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(notchSize.height / 2.0),
+              bottomRight: Radius.circular(notchSize.height / 2.0),
+            ),
+            color: Colors.black,
+          ),
+        ),
+      );
+    }
+  }
+
+  Widget _buildDynamicIsland(Size notchSize, Size simulatedSize) {
+    if (_simulatedOrientation == Orientation.landscape) {
+      return Positioned(
+        left: 0.0,
+        top: (simulatedSize.height - notchSize.width) / 2.0,
+        width: notchSize.height,
+        height: notchSize.width,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.all(Radius.circular(notchSize.height / 2.0)),
+            color: Colors.black,
+          ),
+        ),
+      );
+    } else {
+      return Positioned(
+        top: 8.0, // Dynamic Island sits slightly below the top edge
+        right: (simulatedSize.width - notchSize.width) / 2.0,
+        width: notchSize.width,
+        height: notchSize.height,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.all(Radius.circular(notchSize.height / 2.0)),
+            color: Colors.black,
+          ),
+        ),
+      );
+    }
   }
 
   void showSlider({

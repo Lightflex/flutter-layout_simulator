@@ -69,7 +69,7 @@ class _State extends State<CustomDeviceBuilder> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            Divider(color: Colors.grey.withOpacity(0.2)),
+            Divider(color: Colors.grey.withValues(alpha: 0.2)),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               child: Column(
