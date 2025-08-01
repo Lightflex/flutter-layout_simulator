@@ -73,7 +73,7 @@ class _DeviceListState extends State<DeviceList> {
       backgroundColor: Colors.grey[900],
       body: Column(
         children: [
-          Divider(color: Colors.grey.withOpacity(0.2)),
+          Divider(color: Colors.grey.withValues(alpha: 0.2)),
           Flexible(
             child: ListView.builder(
               itemCount: entries.length,
@@ -115,7 +115,7 @@ class _DeviceListState extends State<DeviceList> {
                                 body: Column(
                                   children: [
                                     Divider(
-                                        color: Colors.grey.withOpacity(0.2)),
+                                        color: Colors.grey.withValues(alpha: 0.2)),
                                     buildChildContent(index: index),
                                   ],
                                 ),

@@ -31,6 +31,7 @@ final iosSpecs = <DeviceSpecification>[
     padding: EdgeInsets.only(top: 44.0, bottom: 34.0),
     paddingLandscape: EdgeInsets.only(left: 44.0, right: 44.0, bottom: 21.0),
     notchSize: Size(209.0, 30.0),
+    notchType: NotchType.traditional,
   ),
   DeviceSpecification(
     platform: TargetPlatform.iOS,
@@ -40,15 +41,7 @@ final iosSpecs = <DeviceSpecification>[
     padding: EdgeInsets.only(top: 44.0, bottom: 34.0),
     paddingLandscape: EdgeInsets.only(left: 44.0, right: 44.0, bottom: 21.0),
     notchSize: Size(209.0, 30.0),
-  ),
-  DeviceSpecification(
-    platform: TargetPlatform.iOS,
-    name: 'iPhone XR (XS Max, 11, 11 Pro Max)',
-    size: Size(414.0, 896.0),
-    cornerRadius: 20.0,
-    padding: EdgeInsets.only(top: 44.0, bottom: 34.0),
-    paddingLandscape: EdgeInsets.only(left: 44.0, right: 44.0, bottom: 21.0),
-    notchSize: Size(209.0, 30.0),
+    notchType: NotchType.traditional,
   ),
   DeviceSpecification(
     platform: TargetPlatform.iOS,
@@ -58,6 +51,39 @@ final iosSpecs = <DeviceSpecification>[
     padding: EdgeInsets.only(top: 44.0, bottom: 34.0),
     paddingLandscape: EdgeInsets.only(left: 44.0, right: 44.0, bottom: 21.0),
     notchSize: Size(209.0, 30.0),
+    notchType: NotchType.traditional,
+  ),
+  DeviceSpecification(
+    platform: TargetPlatform.iOS,
+    name: 'iPhone XR (XS Max, 11, 11 Pro Max)',
+    size: Size(414.0, 896.0),
+    cornerRadius: 20.0,
+    padding: EdgeInsets.only(top: 44.0, bottom: 34.0),
+    paddingLandscape: EdgeInsets.only(left: 44.0, right: 44.0, bottom: 21.0),
+    notchSize: Size(209.0, 30.0),
+    notchType: NotchType.traditional,
+  ),
+  // iPhone 14 Pro Max - with Dynamic Island
+  DeviceSpecification(
+    platform: TargetPlatform.iOS,
+    name: 'iPhone 14 Pro Max',
+    size: Size(430.0, 932.0),
+    cornerRadius: 25.0,
+    padding: EdgeInsets.only(top: 54.0, bottom: 34.0),
+    paddingLandscape: EdgeInsets.only(left: 44.0, right: 44.0, bottom: 21.0),
+    notchSize: Size(126.0, 37.0), // Dynamic Island size
+    notchType: NotchType.dynamicIsland,
+  ),
+  // iPhone 14 Pro - with Dynamic Island
+  DeviceSpecification(
+    platform: TargetPlatform.iOS,
+    name: 'iPhone 14 Pro',
+    size: Size(393.0, 852.0),
+    cornerRadius: 25.0,
+    padding: EdgeInsets.only(top: 54.0, bottom: 34.0),
+    paddingLandscape: EdgeInsets.only(left: 44.0, right: 44.0, bottom: 21.0),
+    notchSize: Size(126.0, 37.0), // Dynamic Island size
+    notchType: NotchType.dynamicIsland,
   ),
   DeviceSpecification(
     platform: TargetPlatform.iOS,
